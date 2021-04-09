@@ -13,6 +13,11 @@ options(encoding = "UTF-8")
 library(shiny)
 library(Seurat)
 library(ggplot2)
+library(magrittr)
+# Load data
+BBB_all<-readRDS("/md01/nieyg/project/BBB/BBB_YMO.rds")
+BBB_all$celltype <- factor(BBB_all$celltype,levels=c("Arterial","C_A","Capillary_1","Capillary_2","Capillary_3","Capillary_4","C_V_1","C_V_2","Venous","Interferon","Choroid_plexus"))
+BBB_all$orig.ident <- factor(BBB_all$orig.ident,levels=c("Young","Middle1","Old"))
 
 # Load data
 YMO<-readRDS("/md01/nieyg/project/BBB/YMO_results/YMO_onlyEC_integrated.rds")
