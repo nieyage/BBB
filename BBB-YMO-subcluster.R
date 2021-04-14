@@ -162,16 +162,16 @@ dev.off()
 
   
 #Heatmap for BBB  genes(23) in different clusters 
-pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/23genes_heatmap_forsubtype.pdf")
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/23genes_heatmap_forsubtype-V2.pdf")
 for (i in levels(EC_cells.integrated)){
   subEC_cells.integrated<-subset(x = EC_cells.integrated,idents=i)
   features = c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",
     'Ddc','Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd")
-  p <-DoHeatmap(EC_cells.integrated, features = features, group.by = "orig.ident") 
+  p <-DoHeatmap(EC_cells.integrated, features = features,group.by = "orig.ident",combine = F) 
   print(p)
 }
 dev.off()
-
+ 
 DoHeatmap(EC_cells.integrated, features = features,size=3,angle = -50, hjust=0.8) 
 
 dev.off()
@@ -197,6 +197,8 @@ dev.off()
 
 #########DEGs GO and KEGG#################
 
+up<-rownames(mydata[which(mydata$Condition=="Up"),])
+down<-rownames(mydata[which(mydata$Condition=="Down"),])
 
 pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/choroid_plexus-up-GO.pdf",width=13,height=8)
 
@@ -280,5 +282,87 @@ p<-ggplot(Umap, aes(x = UMAP_1, y = UMAP_2, color = tx)) +
       scale_color_manual(values=c( "Old"= "#E64B35", "Middle1"="grey","Young" = "grey"))
 p+labs(title="Aged cells distribution")+theme_bw()+theme(panel.grid.major=element_line(colour=NA))
 dev.off()
+
+
+#DimPlot
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/BBB_EC_cells_annotation-V2.pdf")
+DimPlot(EC_cells.integrated, reduction = "umap", label = TRUE, pt.size = 0.5,
+  cols=c("Arterial"="#206A5D","C_A"="#81B264","Capillary_1"="#FFCC29","Capillary_2"="#FFCC29","Capillary_3"="#FFCC29","Capillary_4"="#FFCC29",
+    "C_V_1"="#F58634","C_V_2"="#F58634","Venous"="#BE0000","Choroid_plexus"="#31326F","Interferon"="#93329E")) + labs(title = "Brain ECs subtypes")
+dev.off();
+
+EC_cells.integrated$celltype<-factor(EC_cells.integrated$celltype,levels=c("Arterial","C_A","Capillary_1","Capillary_2",
+  "Capillary_3","Capillary_4","C_V_1","C_V_2","Venous","Choroid_plexus","Interferon"))
+EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/23genes_heatmap_forsubtype-V2.pdf")
+  cols=c("Arterial"="#206A5D","C_A"="#81B264","Capillary_1"="#FFCC29","Capillary_2"="#FFCC29","Capillary_3"="#FFCC29","Capillary_4"="#FFCC29",
+    "C_V_1"="#F58634","C_V_2"="#F58634","Venous"="#BE0000","Choroid_plexus"="#31326F","Interferon"="#93329E")
+DoHeatmap(EC_cells.integrated, features = features,group.by = "celltype",group.colors=cols) 
+
+dev.off()
+
+
+
+
+#####choroid plexus VS BBB
+######
+pdf("/md01/nieyg/project/BBB/YMO_results/choroid_plexus/choroid_plexus_marker_UMAP.pdf")
+m<-c("Plvap", "Plpp3","Esm1")
+FeaturePlot(EC_cells.integrated, features =m, pt.size = 0.2)
+dev.off()
+pdf("/md01/nieyg/project/BBB/YMO_results/choroid_plexus/choroid_plexus_heatmap.pdf")
+Choroid.markers <- FindMarkers(EC_cells.integrated, ident.1 = "Choroid_plexus", min.pct = 0.25,logfc.threshold = 0)
+  cols=c("Arterial"="grey","C_A"="grey","Capillary_1"="grey","Capillary_2"="grey","Capillary_3"="grey","Capillary_4"="grey",
+    "C_V_1"="grey","C_V_2"="grey","Venous"="grey","Choroid_plexus"="#31326F","Interferon"="grey")
+
+level<-c("Arterial","C_A","Capillary_1","Capillary_2","Capillary_3","Capillary_4",
+    "C_V_1","C_V_2","Venous","Interferon","Choroid_plexus")
+EC_cells.integrated$celltype<-factor(EC_cells.integrated$celltype,levels=level)
+EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
+
+DoHeatmap(EC_cells.integrated, features = up,group.by = "celltype",group.colors=cols) 
+
+DoHeatmap(EC_cells.integrated, features = down,group.by = "celltype",group.colors=cols) 
+
+dev.off()
+
+level<-c("other","Choroid_plexus")
+EC_cells.integrated$celltype<-factor(EC_cells.integrated$celltype,levels=level)
+EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
+
+
+
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/DEG-heatmap-Age.pdf")
+cols=c("Arterial"="#206A5D","C_A"="#81B264","Capillary_1"="#FFCC29","Capillary_2"="#FFCC29","Capillary_3"="#FFCC29","Capillary_4"="#FFCC29",
+    "C_V_1"="#F58634","C_V_2"="#F58634","Venous"="#BE0000","Choroid_plexus"="#31326F","Interferon"="#93329E")
+
+level<-c("Arterial","C_A","Capillary_1","Capillary_2","Capillary_3","Capillary_4",
+    "C_V_1","C_V_2","Venous","Choroid_plexus","Interferon")
+EC_cells.integrated$celltype<-factor(EC_cells.integrated$celltype,levels=level)
+EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
+level<-c("Young","Middle1","Old")
+EC_cells.integrated$orig.ident<-factor(EC_cells.integrated$orig.ident,levels=level)
+EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
+DoHeatmap(EC_cells.integrated, features = Aged_DEG,group.by = "orig.ident",group.colors=c("Young" = "#00A087", "Middle1"="#FFA040","Old" = "#E64B35")) 
+DoHeatmap(EC_cells.integrated, features = Young_DEG,group.by = "orig.ident",group.colors=c("Young" = "#00A087", "Middle1"="#FFA040","Old" = "#E64B35")) 
+dev.off()
+
+
+new.cluster.ids <- c("other","other","other","other","other",
+  "other","other","other","other","Choroid_plexus","other")
+names(new.cluster.ids) <- levels(EC_cells.integrated)
+EC_cells.integrated <- RenameIdents(EC_cells.integrated, new.cluster.ids)
+EC_cells.integrated$Choroidplexus<-EC_cells.integrated@active.ident
+
+Cup<-c("Mgll","Rgcc","Ednrb","Plpp3")
+Cdown<-c("Slco1a4","Slc39a10","Slco1c1","Abcb1a")
+pdf("/md01/nieyg/project/BBB/YMO_results/choroid_plexus/Choroid_plexus_Violin_down.pdf")
+#StackedVlnPlot(EC_cells.integrated, Cup, pt.size=0)
+VlnPlot(EC_cells.integrated,features =Cdown[1],assay="RNA",group.by="Choroidplexus",pt.size = 0,ncol=1,
+  split.by="orig.ident",col=c("Young" = "#00A087", "Middle1"="#FFA040","Old" = "#E64B35"))+
+geom_boxplot(width=0.2,outlier.size=0,position=position_dodge(width=0.9))
+
+dev.off()
+
 
 

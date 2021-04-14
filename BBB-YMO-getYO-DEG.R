@@ -461,15 +461,15 @@ for ( i in 1:length(Young_DEG))
     meta[i,11] = 0
 }
 
-pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/DEG_upsetR_Ageing_up.pdf")
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/DEG_upsetR_Ageing_up-V2.pdf")
 #meta = data.frame(meta)
 require(ggplot2); require(plyr); require(gridExtra); require(grid);
 library(UpSetR)
 m<-as.data.frame(meta)
 c<-cbind(Young_DEG,m)
-upset(c, mb.ratio = c(0.6, 0.4), order.by = "freq", 
-      nsets = 7, number.angles = 0, point.size = 4, line.size = 1, mainbar.y.label = "Number of Aging UP gene genes",
-      sets.x.label = "Aging UP gene", text.scale = c(2, 2, 0.8, 2, 2, 2))
+upset(c, mb.ratio = c(0.7, 0.3), order.by = "freq", 
+      nsets = 11, number.angles = 0, point.size = 4, line.size = 1, mainbar.y.label = "Number of Aging UP gene genes",
+      sets.x.label = "Aging UP gene", keep.order=c("Arterial","C_A","Caplillary_1","Caplillary_2","Caplillary_3","Caplillary_4","C_V_1","C_V_2","Venous","Choroid_plexus","Interferon"),text.scale = c(2, 2, 0.8, 2, 2, 2))
 
 mylist<-list(data.frame(Young_Arterial),data.frame(Young_C_A),data.frame(Young_Caplillary_1),data.frame(Young_Caplillary_2),
 	data.frame(Young_Caplillary_3),	data.frame(Young_Caplillary_4),data.frame(Young_C_V_1),data.frame(Young_C_V_2),
@@ -548,4 +548,5 @@ StackedVlnPlot(EC_cells.integrated, Aged_DEG[101:104], pt.size=0, cols=my36color
 StackedVlnPlot(EC_cells.integrated, Aged_DEG[105:107], pt.size=0, cols=my36colors)
 dev.off();
 
-
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/TF_Violin.pdf",width=10,height=5)
+StackedVlnPlot(EC_cells.integrated,up, pt.size=0)

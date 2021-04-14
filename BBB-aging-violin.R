@@ -7,12 +7,12 @@ library(magrittr)
 library(monocle)
 EC_cells.integrated<-readRDS("BBB_onlyEC.rds")
 ########aging相关的基因在young和old的单细胞中是否差异#######
-
+, cols=c("#00A087","#FFA040","#E64A35")
 Decrease<-c("Tfrc","Mfsd2a","Tjp1","Slco1c1","Slco1a4","Slc29a1","Slco2b1")
 Increase<-c("B2m","Tspo","Vwf","Ckb","Il18","Alpl")
 library(ggplot2)
 modify_vlnplot <- function(obj, feature, pt.size = 0, plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),...) {
-       p <- VllnPlot(obj, features = feature,split.by = "orig.ident", pt.size = pt.size, ... ) +
+       p <- VllnPlot(obj, features = feature,assay="RNA",group.by="celltype",split.by="orig.ident", pt.size = pt.size, ... ) +
                xlab("") + ylab(feature) + ggtitle("") +
                #+geom_boxplot(width=0.2)+
                theme(legend.position = "none",

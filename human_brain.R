@@ -132,8 +132,50 @@ FeaturePlot(adultEC, features = YoungDEG)
 FeaturePlot(fetalEC, features = YoungDEG)
 dev.off()
 
+adultEC<-readRDS("human_adult_brain.integrated.rds")
+EC_cells <- subset(adultEC,idents=c("End"))
 
 
+saveRDS(EC_cells,"human_adult_brain.EC_cells.rds")
+EC_cells <- readRDS("human_adult_brain.EC_cells.rds")
+#######gene Umap###########
+pdf("/md01/nieyg/project/BBB/human_brain/plot/t.pdf")
+FeaturePlot(EC_cells, features = "A1BG")
 
+
+#count<-as.matrix(EC_cells@assays$RNA)
+#count<-t(count)
+gene<-as.data.frame(EC_cells@assays$RNA["A1BG",])
+gene<-t(gene)
+gene<-as.data.frame(gene)
+
+p<-ggplot(gene, aes(x = gene[,1]))
+p + geom_density(color = “black”, fill = “gray”)+theme_bw() + theme(panel.grid=element_blank())
+
+ggplot(dat,aes(x=Num))+
+  geom_density(aes(fill=as.character(dat$Sample),color=as.character(dat$Sample)),alpha = 0.5,size=1,linetype="solid")
+
+EC_cells <- readRDS("/md01/nieyg/project/BBB/human_brain/human_adult_brain.EC_cells.rds")
+    tabPanel("Adulet Human Brain EC",
+             fluidRow(
+                 column(10,
+                        wellPanel(
+                            textInput("human_gene", label = h3("Gene symbols"), value = "Sox17"),
+                            plotOutput("human_featureplot",height="400px",width = "400px"),
+                            plotOutput("human_density",height="400px",width = "600px")))         
+                 
+             )
+    ),
+
+    output$human_density <- renderPlot({
+        gene<-as.data.frame(EC_cells@assays$RNA[input$human_gene,])
+        gene<-t(gene)
+        gene<-as.data.frame(gene)       
+        p<-ggplot(gene, aes(x = gene[,1]))+labs(x="log2(RPKM+1)",y="Density",title=input$human_gene)
+        p + geom_density(color = "black")+theme_bw() + theme(panel.grid=element_blank())
+    })
+    output$human_featureplot <- renderPlot({
+        FeaturePlot(EC_cells, features = input$human_gene)
+    })
 
 
