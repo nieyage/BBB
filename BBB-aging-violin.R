@@ -12,15 +12,15 @@ Decrease<-c("Tfrc","Mfsd2a","Tjp1","Slco1c1","Slco1a4","Slc29a1","Slco2b1")
 Increase<-c("B2m","Tspo","Vwf","Ckb","Il18","Alpl")
 library(ggplot2)
 modify_vlnplot <- function(obj, feature, pt.size = 0, plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),...) {
-       p <- VllnPlot(obj, features = feature,assay="RNA",group.by="celltype",split.by="orig.ident", pt.size = pt.size, ... ) +
-               xlab("") + ylab(feature) + ggtitle("") +
+       p <- VllnPlot(obj, features = feature,assay="RNA",group.by="celltype",split.by="orig.ident", col=cols,pt.size = pt.size, ... ) +
+               xlab("") + ylab(feature) + ggtitle("") +geom_boxplot(width=0.2,outlier.size=0,position=position_dodge(width=0.9))+
                #+geom_boxplot(width=0.2)+
                theme(legend.position = "none",
                axis.text.x = element_blank(),
-               axis.text.y = element_blank(),
+               #axis.text.y = element_blank(),
                axis.ticks.x = element_blank(),
-               axis.ticks.y = element_line(),
-               axis.title.y = element_text(size = rel(1), angle = 0, vjust = 0.5),
+               #axis.ticks.y = element_line(),
+               #axis.title.y = element_text(size = rel(1), angle = 0, vjust = 0.5),
                plot.margin = plot.margin )
        return(p)
 }

@@ -1,0 +1,224 @@
+##############BBB pseudotime######
+#####monocle downsample###########
+## Load required packages
+library(Seurat)
+library(stringr) 
+library(ggplot2)
+library(dplyr)
+library(ArchR)
+library(monocle)
+EC_cells.integrated<-readRDS("YMO_onlyEC_integrated.rds")
+EC_five<-subset(EC_cells.integrated, idents = c( "Arterial","C_A","Capillary_1","Capillary_2","Capillary_3","Capillary_4","C_V_1","C_V_2","Venous"))
+###########pesudotime rm                                                                EC_five@meta.data$subtype<-Idents(EC_five)
+DefaultAssay(EC_five)<-"RNA"
+set.seed(2)
+pdf("monocle_markergene-23.pdf")
+
+all<-1:26063
+down<-sample(all,3000)
+EC_five@meta.data$cellorder<-1:26063
+down_monocle<- EC_five[ , which(EC_five@meta.data$cellorder %in% down)]
+EC_five<-down_monocle
+EC_five<-readRDS("EC_five.rds")
+new.cluster.ids <- c( "Arterial","C_A","Capillary","Capillary","Capillary","Capillary","C_V","C_V","Venous")
+names(new.cluster.ids) <- levels(EC_five)
+EC_five <- RenameIdents(EC_five, new.cluster.ids)
+EC_five$celltype<-EC_five@active.ident
+
+#Extract data, phenotype data, and feature data from the SeuratObject
+data <- as(as.matrix(EC_five@assays$RNA@counts), 'sparseMatrix')
+pd <- new('AnnotatedDataFrame', data = EC_five@meta.data)
+fData <- data.frame(gene_short_name = row.names(data), row.names = row.names(data))
+fd <- new('AnnotatedDataFrame', data = fData)
+
+monocle_cds <- newCellDataSet(data,phenoData = pd,	featureData = fd,lowerDetectionLimit = 0.5,
+	expressionFamily = negbinomial.size())
+
+	 ####使用RNA count
+#当数据的表达量类型是FPKM值，分布类型设为tobit()使用expressionFamily=VGAM:::tobit(Lower=0.1)。
+#当数据为UMIs, Transcript counts时，数据分布需要设为负二项分布，即negbinomial.size()。
+#由于做差异分析通常用到mRNA couts，常常按照官方的方法转成分子数，使用rpc_matrix <- relative2abs(HSMM, method = "num_genes")。
+
+# 归一化 
+ monocle_cds<- estimateSizeFactors(monocle_cds)
+ monocle_cds<- estimateDispersions(monocle_cds)
+###Filtering low-quality cells
+ monocle_cds <- monocle::detectGenes(monocle_cds, min_expr = 3 )
+head(featureData(monocle_cds)@data)
+expressed_genes <- row.names(subset(featureData(monocle_cds)@data,
+                                     num_cells_expressed >= 10))
+
+
+features <- c( "Fbln5", "Cytl1","Mgp","S100a6", "Azin1","Pi16","Bmx", "Vegfc","Fbln2","Gkn3","Hey1","Edn3", ######Arterial
+  "Tgfb2", "Glul","Slc26a10","Lypd1",###C-A
+  "Ddc","Mfsd2a", "Cxcl12","Spock2","Rgcc",####C
+  "Tfrc", "Car4", "Itm2a","Chn2",#####C-V
+  "Lcn2","Slc38a5","Nr2f2", "Sox12",##Venous
+  "Vcam1", "Vwf" ####A/V
+  )
+
+disp_table <- monocle::dispersionTable(monocle_cds)
+unsup_clustering_genes <- subset(disp_table, mean_expression >= 0.1)
+
+f<-intersect(intersect(unsup_clustering_genes$gene_id,features),intersect(expressed_genes,features))
+monocle_cds <- monocle::setOrderingFilter(monocle_cds, f)
+#pdf("monocle_test.pdf")
+#plot_ordering_genes(monocle_cds)
+
+#Trajectory step 2: reduce data dimensionality  
+monocle_cds <- reduceDimension(monocle_cds, max_components = 2,
+                            method = 'DDRTree')
+monocle_cds <- orderCells(monocle_cds)
+
+pdf("BBB-trajectory.pdf")
+plot_cell_trajectory(monocle_cds,  color_by = "celltype",cell_size=1)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_cell_trajectory(monocle_cds,  color_by = "celltype",cell_size=0.5) +
+    facet_wrap(~celltype, nrow =4)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_cell_trajectory(monocle_cds,  color_by = "State",cell_size=1)
+plot_cell_trajectory(monocle_cds,  color_by = "Pseudotime",cell_size=1)
+
+
+plot_cell_trajectory(monocle_cds,  color_by = "seurat_clusters",cell_size=1)
+
+The23genes <- row.names(subset(fData(monocle_cds),
+                               gene_short_name %in% c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",
+                                       'Ddc','Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd",
+                                       "Tcf7","Lef1","Sox17","Erg")))
+plot_genes_branched_pseudotime(monocle_cds[The23genes,],
+                               branch_point = 1,ncol=2,
+                               color_by = "celltype")
+
+The23genes<-c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",
+                                       'Ddc','Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd",
+                                       "Tcf7","Lef1","Sox17","Erg")
+pdf("BBB-genes-TFs-zonation.pdf")
+cds_subset <- monocle_cds[The23genes,]
+plot_genes_in_pseudotime(cds_subset[1:9], nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_genes_in_pseudotime(cds_subset[10:18], nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_genes_in_pseudotime(cds_subset[19:27], nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+dev.off();
+
+all<-rownames(monocle_cds@phenoData@data)
+b<-all[which(monocle_cds@phenoData@data$State %in% c(2,4,7))]
+a<-setdiff(all,b)
+m<-t(monocle_cds@reducedDimS)
+m<-m[a,]
+m<-as.data.frame(m)
+
+md<-EC_five@meta.data
+md<-md[a,]
+m$celltype<-md$celltype
+colnames(m)<-c("Component1","Component2","celltype")
+data<-monocle_cds@phenoData@data
+data<-data[a,]
+mdata<-cbind(m,data)
+mdata<-mdata[,c(1:3,15:16)]
+
+pdf("linear-BBB-traj-span0.15.pdf")
+ggplot(data=mdata, aes(x=Component1, y=Component2,)) +geom_point(alpha=1, size=1,aes(color=celltype))  +  theme_bw()+
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264","Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="black",se=FALSE,span=0.15)
+
+ggplot(data=mdata, aes(x=Component1, y=Component2,)) +geom_point(alpha=1, size=1,aes(color=Pseudotime))  +  theme_bw()+
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+scale_fill_gradientn(colors = c("#54AEF2", "#326997", "#152F48"))+
+       stat_smooth(color="black",se=FALSE,span=0.15)
+
+ggplot(data=mdata, aes(x=Component1, y=Component2,)) +geom_point(alpha=1, size=1,aes(color=State))  +  theme_bw()+
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+       stat_smooth(color="black",se=FALSE,span=0.15)
+dev.off();
+######The BBBgenes zonation########
+
+count<-t(EC_five@assays$RNA[features,a])
+count<-as.data.frame(count)
+
+mcount<-cbind(mdata,count)
+pdf("Themarkergenes-zonation.pdf")
+i=1;
+for(i in 1:31){
+p<-ggplot(data=mcount, aes(x=Pseudotime, y=mcount[,i+5],)) +geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(features[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264","Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="black",se=FALSE);
+       print(p)
+     }
+dev.off();
+
+features = c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",
+    'Ddc','Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd")
+count<-t(EC_five@assays$RNA[features,a])
+count<-as.data.frame(count)
+
+mcount<-cbind(mdata,count)
+pdf("TheBBBgenes-zonation.pdf")
+i=1;
+for(i in 1:23){
+p<-ggplot(data=mcount, aes(x=Pseudotime, y=mcount[,i+5],)) +geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(features[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264","Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="black",se=FALSE);
+       print(p)
+     }
+dev.off();
+
+Wnt<-c("Porcn","Wnt1","Wnt2","Wnt2b","Wnt3","Wnt3a","Wnt4","Wnt5a","Wnt5b","Wnt6","Wnt7a","Wnt7b","Wnt8a","Wnt8b","Wnt9a","Wnt9b","Wnt10b",
+  "Wnt10a",
+"Wnt11","Wnt16","Cer1","Notum","Wif1","Serpinf1","Sost","Dkk1","Dkk2","Dkk4","Sfrp1","Sfrp2","Sfrp4","Sfrp5","Rspo1","Rspo2","Rspo3","Rspo4",
+"Lgr4","Lgr5","Lgr6","Rnf43","Znrf3","Fzd1","Fzd7","Fzd2","Fzd3","Fzd4","Fzd5","Fzd8","Fzd6","Fzd10","Fzd9","Lrp5","Lrp6","Bambi","Csnk1e",
+"Dvl3","Dvl1","Dvl2","Frat1","Peg12","Frat2","Csnk2a1","Csnk2a2","Csnk2b","Nkd1","Nkd2","Cxxc4","Senp2","4930444G20Rik","Susp4","Gm9839",
+"Gm5415","Gsk3b","Ctnnb1","Axin1","Axin2","Apc","Apc2","Csnk1a1","Tcf7","Tcf7l1","Tcf7l2","Lef1","Ctnnbip1","Cby1","Chd8","Sox17","Ctbp1",
+"Ctbp2","Tle7","Tle6","Tle1","Tle2","Tle3","Tle4","Ctnnd2","Crebbp","Ep300","Ruvbl1","Smad4","Smad3","Map3k7","Nlk","Myc","Jun","Fosl1",
+"Ccnd1","Ccnd2","Ccnd3","Ccn4","Ppard","Mmp7","Psen1","Prkaca","Prkacb","Trp53","Siah1a","Siah1b","Cacybp","Skp1","Tbl1x","Tbl1xr1","Fbxw11",
+"Btrc","Cul1","Rbx1","Gpc4","Ror1","Ror2","Ryk","Vangl2","Vangl1","Prickle2","Prickle1","Prickle4","Prickle3","Invs","Daam1","Daam2","Rhoa",
+"4930544G11Rik","Rock2","Rac1","Rac2","Rac3","Mapk8","Mapk9","Mapk10","Plcb1","Plcb3","Plcb4","Plcb2","Camk2d","Camk2g","Camk2b","Camk2a",
+"Ppp3cc","Ppp3ca","Ppp3cb","Ppp3r1","Ppp3r2","Prkca","Prkcb","Prkcg","Nfatc1","Nfatc2","Nfatc3","Nfatc4")
+count<-t(EC_five@assays$RNA[Wnt,a])
+count<-as.data.frame(count)
+mcount<-cbind(mdata,count)
+pdf("Wnt-pathway-zonation.pdf")
+i=1;
+for(i in 1:173){
+p<-ggplot(data=mcount, aes(x=Pseudotime, y=mcount[,i+5],)) +geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(Wnt[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264","Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="black",se=FALSE);
+       print(p)
+     }
+dev.off();
