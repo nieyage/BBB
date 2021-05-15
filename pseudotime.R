@@ -47,8 +47,6 @@ monocle_cds <- newCellDataSet(data,phenoData = pd,	featureData = fd,lowerDetecti
 head(featureData(monocle_cds)@data)
 expressed_genes <- row.names(subset(featureData(monocle_cds)@data,
                                      num_cells_expressed >= 10))
-
-
 features <- c( "Fbln5", "Cytl1","Mgp","S100a6", "Azin1","Pi16","Bmx", "Vegfc","Fbln2","Gkn3","Hey1","Edn3", ######Arterial
   "Tgfb2", "Glul","Slc26a10","Lypd1",###C-A
   "Ddc","Mfsd2a", "Cxcl12","Spock2","Rgcc",####C
@@ -221,4 +219,88 @@ theme(panel.grid.major.x = element_blank(),
        stat_smooth(color="black",se=FALSE);
        print(p)
      }
+dev.off();
+
+
+
+The23genes<-c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",
+                                       'Ddc','Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd",
+                                       "Tcf7","Lef1","Sox17","Erg")
+pdf("BBB-genes-TFs-zonation.pdf")
+cds_subset <- monocle_cds[The23genes,]
+plot_genes_in_pseudotime(cds_subset[1:9], relative_expr = FALSE,nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_genes_in_pseudotime(cds_subset[10:18], relative_expr = FALSE,nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+
+plot_genes_in_pseudotime(cds_subset[19:27], relative_expr = FALSE,nrow=3,ncol=3,color_by = "celltype",cell_size=0.50)+ 
+ scale_color_manual(breaks = c("Arterial","C_A","Capillary","C_V","Venous"), 
+  values=c("#206A5D","#81B264","#FFCC29","#F58634","#BE0000")) + theme(legend.position = "right")
+dev.off();
+
+
+pdf("BBB-genes-TFs-groupbycelltype-colorbyage.pdf")
+for(i in 1:9){
+  j<-3*i-2
+  k<-3*i
+Thegene<-The23genes[j:k]
+print(Thegene)
+cds_subset <- monocle_cds[Thegene,]
+levels(cds_subset$orig.ident)[3]<-"Aged"
+levels(cds_subset$orig.ident)[2]<-"Middle"
+cds_subset$orig.ident<-factor(cds_subset$orig.ident,levels=c("Young","Middle","Aged"))
+p<-plot_genes_jitter(cds_subset,grouping = "celltype",color_by = "orig.ident",
+ nrow= 3,ncol=1,plot_trend = TRUE,cell_size=0.50)+
+scale_color_manual(breaks = c("Young","Middle","Aged"), 
+  values=c("#009F86","#FF9F40","#E64A35")) + theme(legend.position = "right")
+print(p)
+}
+dev.off();
+
+pdf("BBB-genes-TFs-patternheatmap.pdf")
+cds_subset <- monocle_cds[The23genes,]
+plot_pseudotime_heatmap(cds_subset,
+                #num_clusters = 3,
+                cores = 1,
+                show_rownames = T)
+dev.off();
+
+pdf("Aging-up-gene-groupbycelltype-colorbyage.pdf")
+for(i in 1:36){
+  j<-3*i-2
+  k<-3*i
+Thegene<-Aged_DEG[j:k]
+print(Thegene)
+cds_subset <- monocle_cds[Thegene,]
+levels(cds_subset$orig.ident)[3]<-"Aged"
+levels(cds_subset$orig.ident)[2]<-"Middle"
+cds_subset$orig.ident<-factor(cds_subset$orig.ident,levels=c("Young","Middle","Aged"))
+p<-plot_genes_jitter(cds_subset,grouping = "celltype",color_by = "orig.ident",
+ nrow= 3,ncol=1,plot_trend = TRUE,cell_size=0.50)+
+scale_color_manual(breaks = c("Young","Middle","Aged"), 
+  values=c("#009F86","#FF9F40","#E64A35")) + theme(legend.position = "right")
+print(p)
+}
+dev.off();
+
+
+pdf("Aging-down-gene-groupbycelltype-colorbyage.pdf")
+for(i in 1:10){
+  j<-3*i-2
+  k<-3*i
+Thegene<-Young_DEG[j:k]
+print(Thegene)
+cds_subset <- monocle_cds[Thegene,]
+levels(cds_subset$orig.ident)[3]<-"Aged"
+levels(cds_subset$orig.ident)[2]<-"Middle"
+cds_subset$orig.ident<-factor(cds_subset$orig.ident,levels=c("Young","Middle","Aged"))
+p<-plot_genes_jitter(cds_subset,grouping = "celltype",color_by = "orig.ident",
+ nrow= 3,ncol=1,plot_trend = TRUE,cell_size=0.50)+
+scale_color_manual(breaks = c("Young","Middle","Aged"), 
+  values=c("#009F86","#FF9F40","#E64A35")) + theme(legend.position = "right")
+print(p)
+}
 dev.off();
