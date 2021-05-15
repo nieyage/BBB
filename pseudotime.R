@@ -192,34 +192,7 @@ theme(panel.grid.major.x = element_blank(),
      }
 dev.off();
 
-Wnt<-c("Porcn","Wnt1","Wnt2","Wnt2b","Wnt3","Wnt3a","Wnt4","Wnt5a","Wnt5b","Wnt6","Wnt7a","Wnt7b","Wnt8a","Wnt8b","Wnt9a","Wnt9b","Wnt10b",
-  "Wnt10a",
-"Wnt11","Wnt16","Cer1","Notum","Wif1","Serpinf1","Sost","Dkk1","Dkk2","Dkk4","Sfrp1","Sfrp2","Sfrp4","Sfrp5","Rspo1","Rspo2","Rspo3","Rspo4",
-"Lgr4","Lgr5","Lgr6","Rnf43","Znrf3","Fzd1","Fzd7","Fzd2","Fzd3","Fzd4","Fzd5","Fzd8","Fzd6","Fzd10","Fzd9","Lrp5","Lrp6","Bambi","Csnk1e",
-"Dvl3","Dvl1","Dvl2","Frat1","Peg12","Frat2","Csnk2a1","Csnk2a2","Csnk2b","Nkd1","Nkd2","Cxxc4","Senp2","4930444G20Rik","Susp4","Gm9839",
-"Gm5415","Gsk3b","Ctnnb1","Axin1","Axin2","Apc","Apc2","Csnk1a1","Tcf7","Tcf7l1","Tcf7l2","Lef1","Ctnnbip1","Cby1","Chd8","Sox17","Ctbp1",
-"Ctbp2","Tle7","Tle6","Tle1","Tle2","Tle3","Tle4","Ctnnd2","Crebbp","Ep300","Ruvbl1","Smad4","Smad3","Map3k7","Nlk","Myc","Jun","Fosl1",
-"Ccnd1","Ccnd2","Ccnd3","Ccn4","Ppard","Mmp7","Psen1","Prkaca","Prkacb","Trp53","Siah1a","Siah1b","Cacybp","Skp1","Tbl1x","Tbl1xr1","Fbxw11",
-"Btrc","Cul1","Rbx1","Gpc4","Ror1","Ror2","Ryk","Vangl2","Vangl1","Prickle2","Prickle1","Prickle4","Prickle3","Invs","Daam1","Daam2","Rhoa",
-"4930544G11Rik","Rock2","Rac1","Rac2","Rac3","Mapk8","Mapk9","Mapk10","Plcb1","Plcb3","Plcb4","Plcb2","Camk2d","Camk2g","Camk2b","Camk2a",
-"Ppp3cc","Ppp3ca","Ppp3cb","Ppp3r1","Ppp3r2","Prkca","Prkcb","Prkcg","Nfatc1","Nfatc2","Nfatc3","Nfatc4")
-count<-t(EC_five@assays$RNA[Wnt,a])
-count<-as.data.frame(count)
-mcount<-cbind(mdata,count)
-pdf("Wnt-pathway-zonation.pdf")
-i=1;
-for(i in 1:173){
-p<-ggplot(data=mcount, aes(x=Pseudotime, y=mcount[,i+5],)) +geom_point(alpha=1, size=1,aes(color=celltype))  +  
-theme_bw()+ylab("expression") +ggtitle(Wnt[i]) +
-theme(panel.grid.major.x = element_blank(),
-      panel.grid.minor.x = element_blank(),
-      panel.grid.major.y = element_blank(),
-      panel.grid.minor.y = element_blank())+
-      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264","Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
-       stat_smooth(color="black",se=FALSE);
-       print(p)
-     }
-dev.off();
+
 
 
 
@@ -304,3 +277,101 @@ scale_color_manual(breaks = c("Young","Middle","Aged"),
 print(p)
 }
 dev.off();
+
+
+all<-rownames(monocle_cds@phenoData@data)
+Young<-all[which(monocle_cds@phenoData@data$orig.ident=="Young")]
+The23genes
+count<-t(EC_five@assays$RNA[The23genes,Young])
+count<-as.data.frame(count)
+data<-monocle_cds@phenoData@data
+data<-data[Young,]
+Youngcount<-cbind(data,count)
+
+Middle<-all[which(monocle_cds@phenoData@data$orig.ident=="Middle1")]
+count<-t(EC_five@assays$RNA[The23genes,Middle])
+count<-as.data.frame(count)
+data<-monocle_cds@phenoData@data
+data<-data[Middle,]
+Middlecount<-cbind(data,count)
+
+Aged<-all[which(monocle_cds@phenoData@data$orig.ident=="Old")]
+count<-t(EC_five@assays$RNA[The23genes,Aged])
+count<-as.data.frame(count)
+data<-monocle_cds@phenoData@data
+data<-data[Aged,]
+Agedcount<-cbind(data,count)
+
+
+require(grid)
+pdf("TheBBBgenes-zonation.pdf")
+for(i in 1:27){
+p<-ggplot(data=Youngcount, aes(x=Pseudotime, y=Youngcount[,i+13],)) +
+geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(features[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
+        "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="#009F86",se=FALSE);
+
+q<-ggplot(data=Middlecount, aes(x=Pseudotime, y=Middlecount[,i+13],)) +
+geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(features[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
+        "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="#FF9F40",se=FALSE);
+k<-ggplot(data=Agedcount, aes(x=Pseudotime, y=Agedcount[,i+13],)) +
+geom_point(alpha=1, size=1,aes(color=celltype))  +  
+theme_bw()+ylab("expression") +ggtitle(features[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+
+      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
+        "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000"))+
+       stat_smooth(color="#E64A35",se=FALSE);
+####排版图片#####
+grid.newpage()  ###新建图表版面
+pushViewport(viewport(layout = grid.layout(2,2))) ####将版面分成2*2矩阵
+vplayout <- function(x,y){viewport(layout.pos.row = x, layout.pos.col = y)}
+print(p, vp = vplayout(1,1))
+print(q, vp = vplayout(1,2))
+print(k, vp = vplayout(2,1))
+     }
+dev.off();
+
+par(new=TRUE) 
+
+
+all<-rownames(monocle_cds@phenoData@data)
+count<-t(EC_five@assays$RNA[The23genes,])
+count<-as.data.frame(count)
+data<-monocle_cds@phenoData@data
+data<-data[all,]
+count<-cbind(data,count)
+levels(count$orig.ident)[3]<-"Aged"
+levels(count$orig.ident)[2]<-"Middle"
+aes(color=celltype)
+pdf("TheBBBgenes-zonation.pdf")
+for(i in 14:40){
+p<-ggplot(data=count, aes(x=Pseudotime, y=count[,i],group=orig.ident,col=orig.ident)) +
+geom_point(alpha=1, size=1,aes(color=celltype))  +  
+     scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
+       "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000","Young"="#009F86","Middle"="#FF9F40","Aged"="#E64A35"))+
+theme_bw()+ylab("expression") +ggtitle(The23genes[i]) +
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+ 
+geom_smooth(se=FALSE);
+      print(p)
+     }
+dev.off();
+
