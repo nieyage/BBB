@@ -136,19 +136,3 @@ plot_genes_in_pseudotime(cds_subset, color_by = "celltype",cell_size=0.10)
 dev.off();
 
 
-#########Zonation#######
-#纵轴：gene的表达水平
-#横轴：cell的Pseudotime值
-#color：cell的cell type
-#ggplot2
-gene<-c('Bsg','Abcg2','Abcb1a',"Slc16a4",'Slc30a1','Slc16a1','Slco1c1','Slc2a1',"Gpd2","Nt5c2",'Ddc',
-	'Eogt','Isyna1','Ocln','Cgnl1','Sorbs2','Dnm3','Palm','Tfrc','Igf1r','Tsc22d1','Esyt2',"Palmd")
-cell<-rownames(monocle_sub@phenoData @data)
-count<-EC_five@assays $RNA[gene,cell]
-time<-monocle_sub@phenoData @data$Pseudotime
-celltype<-monocle_sub@phenoData @data$celltype
-plot<-data.frame(time=time,celltype=celltype,expression=count[gene[1],])
-pdf("test.pdf")
-ggplot(plot, aes(x=time, y=expression, color=celltype)) + geom_line() +geom_point(size=4)
-
-
