@@ -60,7 +60,7 @@ human_adult_brain.integrated <- ScaleData(human_adult_brain.integrated, features
 
 # Perform linear dimensional reduction
 human_adult_brain.integrated <- RunPCA(human_adult_brain.integrated, npcs = 50, verbose = FALSE)
-human_adult_brain.integrated <- RunUMAP(human_adult_brain.integrated, reduction = "pca", dims = 1:30)
+human_adult_brain.integrated <- RunUMAP(human_adult_brain.integrated, reduction = "pca", dims = 1:30)   
 pdf("/md01/nieyg/project/BBB/human_brain/plot/human_brain-Umap-sample.pdf.pdf")
 p1 <- DimPlot(human_adult_brain.integrated, reduction = "umap", group.by = "ident")
 p2 <- DimPlot(human_adult_brain.integrated, reduction = "umap", group.by = "pos", label = TRUE, repel = TRUE) + NoLegend()
@@ -70,7 +70,7 @@ dev.off()
 DefaultAssay(human_adult_brain.integrated) <- "RNA"
 saveRDS(human_adult_brain.integrated,"human_adult_brain.integrated.rds")
 # scale and center features in the dataset
-
+all<-readRDS("human_adult_brain.integrated.rds")
 fetalbrain <- FindVariableFeatures(fetalbrain, selection.method = "vst", nfeatures = 2000)
 
 fetalbrain <- ScaleData(fetalbrain, features =rownames(fetalbrain),verbose = FALSE)

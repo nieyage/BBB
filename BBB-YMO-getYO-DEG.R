@@ -550,3 +550,7 @@ dev.off();
 
 pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/TF_Violin.pdf",width=10,height=5)
 StackedVlnPlot(EC_cells.integrated,up, pt.size=0)
+
+pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/23genes_heatmap_forsubtype-V8.pdf")
+p<-DoHeatmap(EC_cells.integrated,features,group.by = "celltype",group.colors=cols,disp.min=-1.5,disp.max=0.5)+scale_fill_gradientn(colors = c("blue", "white", "red"))
+

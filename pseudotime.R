@@ -233,12 +233,45 @@ print(p)
 }
 dev.off();
 
-pdf("BBB-genes-TFs-patternheatmap.pdf")
-cds_subset <- monocle_cds[The23genes,]
+
+# 构建列注释信息
+gene<-c("Bsg","Abcg2","Abcb1a","Slc2a1","Slc16a4","Slc30a1","Slc16a1","Slco1c1","Ddc","Nt5c2","Isyna1","Eogt",
+    "Gpd2","Dnm3","Palm","Palmd","Esyt2","Ocln","Cgnl1","Sorbs2","Tfrc","Igf1r","Tsc22d1","Tcf7","Lef1","Sox17","Erg")
+annotation_row = data.frame(
+  Type = factor(c(rep("Transporter", 8),rep("Enzyme", 5),rep("Endocytosis_membrane_dynamics", 4),
+    rep("TJ_cytoskeleton", 3),rep("Receptor", 2),rep("Transcription_regulator", 1),rep("TF",4))))
+rownames(annotation_row) = gene
+head(annotation_row)
+getPalette =brewer.pal(9, "Set1")
+
+
+ann_colors = list(
+ Type = c("Endocytosis_membrane_dynamics"="#E41A1C","Enzyme"= "#377EB8"       ,            
+"Receptor" ="#4DAF4A"                    ,"TJ_cytoskeleton"= "#984EA3" ,            
+"Transcription_regulator" = "#FF7F00"     ,"Transporter" ="#FFFF33")   )  
+
+pdf("/md01/nieyg/project/BBB/YMO_results/fig4_6/BBB-genes-TFs-patternheatmap-annotattion.pdf")
+cds_subset <- monocle_cds[gene,]
 plot_pseudotime_heatmap(cds_subset,
-                #num_clusters = 3,
+                num_clusters = 3,
                 cores = 1,
+                #annotation_colors = ann_colors,
+                add_annotation_row=annotation_row,
                 show_rownames = T)
+
+######newpages#####
+require(grid)
+grid.newpage()  ###新建图表版面
+
+TFs<-setdiff(The23genes,gene)
+cds_subset <- monocle_cds[TFs,]
+plot_pseudotime_heatmap(cds_subset,
+                num_clusters = 1,
+                cores = 1,
+                #annotation_colors = ann_colors,
+                #add_annotation_row=annotation_row,
+                show_rownames = T)
+
 dev.off();
 
 pdf("Aging-up-gene-groupbycelltype-colorbyage.pdf")
@@ -350,6 +383,8 @@ dev.off();
 par(new=TRUE) 
 
 
+###########The 23 genes zonation########
+
 all<-rownames(monocle_cds@phenoData@data)
 count<-t(EC_five@assays$RNA[The23genes,])
 count<-as.data.frame(count)
@@ -359,13 +394,43 @@ count<-cbind(data,count)
 levels(count$orig.ident)[3]<-"Aged"
 levels(count$orig.ident)[2]<-"Middle"
 aes(color=celltype)
-pdf("TheBBBgenes-zonation.pdf")
+pdf("TheBBBgenes-zonation-changeagecolor.pdf")
 for(i in 14:40){
+    j=i-13
 p<-ggplot(data=count, aes(x=Pseudotime, y=count[,i],group=orig.ident,col=orig.ident)) +
 geom_point(alpha=1, size=1,aes(color=celltype))  +  
      scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
-       "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000","Young"="#009F86","Middle"="#FF9F40","Aged"="#E64A35"))+
-theme_bw()+ylab("expression") +ggtitle(The23genes[i]) +
+       "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000","Young"="#ff7171","Middle"="#77acf1","Aged"="#04009a"))+
+theme_bw()+ylab("expression") +ggtitle(The23genes[j])+
+theme(panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank())+ 
+geom_smooth(se=FALSE);
+      print(p)
+     }
+dev.off();
+
+##########paper plasma uptake gene ###########
+
+plasma_uptake<-c("Slc22a8","Tfrc","Slco1a4","Apoe","Mfsd2a","Lrp8","Slc3a2")
+
+count<-t(EC_five@assays$RNA[plasma_uptake,])
+count<-as.data.frame(count)
+data<-monocle_cds@phenoData@data
+data<-data[all,]
+count<-cbind(data,count)
+levels(count$orig.ident)[3]<-"Aged"
+levels(count$orig.ident)[2]<-"Middle"
+aes(color=celltype)
+pdf("plasma_uptake-zonation-changeagecolor.pdf")
+for(i in 14:20){
+    j=i-13
+p<-ggplot(data=count, aes(x=Pseudotime, y=count[,i],group=orig.ident,col=orig.ident)) +
+geom_point(alpha=1, size=1,aes(color=celltype))  +  
+     scale_color_manual(values=c("Arterial"="#206A5D","C_A"="#81B264",
+       "Capillary"="#FFCC29","C_V"="#F58634","Venous"="#BE0000","Young"="#ff7171","Middle"="#77acf1","Aged"="#04009a"))+
+theme_bw()+ylab("expression") +ggtitle(plasma_uptake[j])+
 theme(panel.grid.major.x = element_blank(),
       panel.grid.minor.x = element_blank(),
       panel.grid.major.y = element_blank(),

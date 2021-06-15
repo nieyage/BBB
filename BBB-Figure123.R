@@ -134,19 +134,29 @@ DoHeatmap(EC_cells.integrated,Capillary_2_top,group.by = "orig.ident",group.colo
 
 
 Caplillary2vs3.markers <- FindMarkers(EC_cells.integrated, ident.1 = "Capillary_2", ident.2 = "Capillary_3", min.pct = 0.25,logfc.threshold = 0)
-pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/C2vsC3_volcano.pdf",width=5,height=5)
+
+library(ggrepel)
+pdf("/md01/nieyg/project/BBB/YMO_results/fig4_6/C2vsC3_volcano-3.pdf",width=5,height=5)
   mydata<-as.data.frame(Caplillary2vs3.markers)
   mydata$Condition=ifelse(mydata$avg_logFC>=0.5 & mydata$p_val_adj<=0.05,"Capillary_2",  ifelse(mydata$avg_logFC<=-0.5 & mydata$p_val_adj<=0.05,"Capillary_3","normal"))
   ##对满足不同条件的数据给不同的标记，放入Condition列
-  p <-ggplot(data=mydata, aes(x=avg_logFC, y=-log10(p_val_adj), colour=Condition)) + 
+  mydata$gene<-rownames(mydata)
+  ggplot(data=mydata, aes(x=avg_logFC, y=-log10(p_val_adj), colour=Condition)) + 
               geom_point(alpha=0.8, size=1)  +  xlab("log2 fold change") + ylab("-log10 padj")+xlim(c(-2, 2)) +
-              ggtitle("Capillary_2 vs Capillary_3")+theme_bw()+theme(panel.grid.major.x = element_blank(),
+              ggtitle("Capillary_2 vs Capillary_3")+
+              geom_text_repel(data=mydata[mydata$Condition %in% c("Capillary_2","Capillary_3"),],segment.color = "black", aes(label=gene),size=3,show.legend=FALSE)+
+              theme_bw()+theme(panel.grid.major.x = element_blank(),
       panel.grid.minor.x = element_blank(),
       panel.grid.major.y = element_blank(),
       panel.grid.minor.y = element_blank())+
               geom_hline(yintercept=-log10(0.05),linetype=4)+geom_vline(xintercept=c(-1,1),linetype=4)+
               scale_color_manual(values=c('Capillary_2'='red','Capillary_3'='deepskyblue','normal'='gray'));
-   p
+
+color = "black",
+
+
+
+
 
 dev.off()
 Capillary_2<-rownames(mydata[which(mydata$Condition=="Capillary_2"),])
@@ -259,8 +269,8 @@ EC_cells.integrated$celltype<-factor(EC_cells.integrated$celltype,levels=level)
 EC_cells.integrated@active.ident<-EC_cells.integrated$celltype
 
 pdf("/md01/nieyg/project/BBB/YMO_results/ECplot/ChpvsC_heatmap_downsample.pdf")
-DoHeatmap(ChpandC, features = Choroid_plexus_downsample,group.by = "celltype",group.colors=cols,disp.min=-1,disp.max=1) +scale_fill_gradientn(colors = c("blue", "black", "red"))
-DoHeatmap(ChpandC, features = Capillary_downsample,group.by = "celltype",group.colors=cols,disp.min=-1,disp.max=1) +scale_fill_gradientn(colors = c("blue", "black", "red"))
+DoHeatmap(ChpandC, features = Choroid_plexus_downsample,group.by = "celltype",group.colors=cols,disp.min=-1,disp.max=1) +scale_fill_gradientn(colors = c("#4858A7","#788FC8","#D6DAE1","#F49B7C","#B51F29"))
+DoHeatmap(ChpandC, features = Capillary_downsample,group.by = "celltype",group.colors=cols,disp.min=-1,disp.max=1) +scale_fill_gradientn(colors = c("#4858A7","#788FC8","#D6DAE1","#F49B7C","#B51F29"))
 dev.off()
 
 #########DEGs GO and KEGG#################
